@@ -3,19 +3,19 @@ provider "aws" {
 region = "us-west-2" # All AWS resources created in this Terraform configuration will by default be deployed in the US West (Oregon) region
 }
 
-
+# Terraform Backend
 terraform {
 backend "s3" {
-bucket         = "terraform-state-storage-2024"     # Replace with your actual bucket name
+bucket         = "terraform-state-storage"     # Replace with your actual bucket name
 key            = "jenkins-server/terraform.tfstate" # Path to the state file inside S3
-region         = "ap-southeast-2"
+region         = "us-west-2"
 dynamodb_table = "terraform-lock-table" # Locking mechanism
 encrypt        = true                   # Enable state encryption
 }
 }
 
-# Main resources
-resource "aws_instance" "jenkins-server" {
+# Main resources. Defines an AWS EC2 instance for Jenkins
+resource "aws_instance" "jenkins-server" {  
 ami                    = "ami-" # replace / Amazon Linux 2023 AMI
 instance_type          = "t2.micro"
 key_name               = var.key_name
@@ -29,7 +29,7 @@ Usage = "pipeline"
 }
 }
 
-# Allocate an Elastic IP
+# Allocate an Elastic IP. Elastic IPs are static IP addresses designed for dynamic cloud computing, providing a fixed IP address for your instance.
 
 resource "aws_eip" "jenkins_eip" {
 domain   = "vpc"
