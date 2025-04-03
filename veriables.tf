@@ -15,7 +15,7 @@ variable "aws_services" {
 # variable for region name
 variable "region" {
   description = "AWS region"
-  default     = "us-west-2"
+  default     = "ap-southeast-2"
 }
 
 # variable for bucket name
