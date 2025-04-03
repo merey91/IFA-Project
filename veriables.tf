@@ -9,7 +9,7 @@ default     = "ifa-Jenkins-keypair"
 variable "aws_services" {
   description = "AWS Services"
   type        = list(string)
-  default     = ["EC2", "S3"]
+  default     = ["EC2", "S3", "ECS"]
 }
 
 # variable for region name
@@ -28,10 +28,10 @@ variable "bucket_name" {
 variable "instance_name" {
   description = "Name of the EC2 instance"
   type        = string
-  default     = "zxu-2025"
+  default     = "ifa-instance"
 }
 
-# variable for instance class
+# variable for instance type
 variable "instance_type" {
   description = "Type of EC2 instance"
   type        = string
