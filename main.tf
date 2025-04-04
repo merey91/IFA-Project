@@ -17,7 +17,7 @@ encrypt        = true                   # Enable state encryption
 # Main resources
 resource "aws_instance" "jenkins-ifa" {
   ami                    = "ami-0013d898808600c4a" # Amazon Linux 2023 AMI
-  instance_type          = "t3.medium"
+  instance_type          = "t3.micro"
   key_name               = var.key_name
   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
 
