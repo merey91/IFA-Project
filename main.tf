@@ -64,8 +64,6 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 }
 
-
-
 # Deploy static files to S3 Bucket
 resource "aws_s3_bucket_object" "website_files" {
   bucket = aws_s3_bucket.my_bucket.id  # Specifies the ID of the S3 bucket where files will be stored.
