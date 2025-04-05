@@ -16,7 +16,7 @@ terraform {
 
 # declares a new AWS S3 Bucket resource
 resource "aws_s3_bucket" "my_bucket" { 
-  bucket = "ifa-app-bucket" # Names the S3 bucket.
+  bucket = var.bucket_name 
   acl    = "public-read" # Sets the access control list to public-read, allowing anyone to read the objects in the bucket, which is typical for static website hosting.
 
   user_data = file("${path.module}/user-data.sh")
