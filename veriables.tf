@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.0"
+    }
+  }
+}
+
 variable "bucket_name" {
   description = "Name of the S3 bucket for static website hosting."
   default     = "ifa-translator-app-bucket"  # Your S3 Bucket Name
