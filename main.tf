@@ -38,7 +38,6 @@ resource "aws_s3_bucket" "my_bucket" {
       },
     ]
   })
-}
 
 # Configure CloudFront
 resource "aws_cloudfront_distribution" "s3_distribution" {
@@ -73,6 +72,8 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
     }
   }
 }
+
+
 
 # Deploy static files to S3 Bucket
 resource "aws_s3_bucket_object" "website_files" {
