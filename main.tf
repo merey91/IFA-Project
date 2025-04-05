@@ -25,7 +25,7 @@ resource "aws_s3_bucket" "my_bucket" {
         Effect = "Allow",
         Principal = "*", # Allows access to "everyone."
         Action = "s3:GetObject",
-        Resource = "arn:aws:s3:::ifa-app-bucket/*"
+        Resource = "arn:aws:s3:::{aws_s3_bucket.my_bucket.bucket}/*"
       },
     ]
   })
