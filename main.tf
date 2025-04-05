@@ -17,7 +17,10 @@ resource "aws_s3_bucket" "my_bucket" {
   }
 
 # Sets a bucket policy to explicitly allow public read access to all objects in the bucket. Necessary for hosting public static websites.
-  policy = jsonencode({ 
+resource "aws_s3_bucket_policy" "my_bucket_policy" {
+  bucket = aws_s3_bucket.my_bucket.id
+
+policy = jsonencode({ 
     Version = "2012-10-17",
     Statement = [
       {
@@ -29,6 +32,7 @@ resource "aws_s3_bucket" "my_bucket" {
       },
     ]
   })
+}
 
 # Configure CloudFront
 resource "aws_cloudfront_distribution" "s3_distribution" {
