@@ -20,8 +20,8 @@ resource "aws_s3_bucket" "my_bucket" {
   acl    = "public-read" # Sets the access control list to public-read, allowing anyone to read the objects in the bucket, which is typical for static website hosting.
 
   website {
-    index_document = "index.html" # Specifies the homepage for the static website hosted in this bucket.
-    error_document = "404.html" # Specifies the error page that will be displayed when a requested file is not found.
+    index_document = var.index_document  # Specifies the homepage for the static website hosted in this bucket.
+    error_document = var.error_document  # Specifies the error page that will be displayed when a requested file is not found.
   }
   }
 
