@@ -8,5 +8,5 @@ cd translator-app
 npm install
 npm run build
 
-#
-aws s3 sync ./out s3://{aws_s3_bucket.my_bucket.bucket} --delete
+# ${var.bucket_name}
+aws s3 sync ./out s3://{aws_s3_bucket.my_bucket.bucket} --delete 
