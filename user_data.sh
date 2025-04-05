@@ -1,8 +1,8 @@
 #!/bin/bash
               
-# Clone the repository url
-git clone https://github.com/Innovate-Future-Association-Translation/translator-app.git /home/ec2-user/app
-cd /home/ec2-user/app
+# Clone the repository url.
+git clone https://github.com/Innovate-Future-Association-Translation/translator-app.git 
+cd translator-app
               
 # Install dependencies and build.
 npm install
