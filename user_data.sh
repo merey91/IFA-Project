@@ -4,7 +4,7 @@
 git clone https://github.com/Innovate-Future-Association-Translation/translator-app.git /home/ec2-user/app
 cd /home/ec2-user/app
               
-# 安装依赖并构建
+# Install dependencies and build.
 npm install
 npm run build
 
