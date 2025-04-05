@@ -1,11 +1,5 @@
 #
-output "alb_dns_name" {
-  description = "The DNS name of the load balancer"
-  value       = module.alb.dns_name
-}
-
-#no
-output "jenkins_elastic_ip" {
-  description = "Elastic IP of the Jenkins instance"
-  value       = aws_eip.jenkins_eip.public_ip
+output "application_url" {
+  description = "The Sign up page of the Website"
+  value       = "http://${aws_s3_bucket.my_bucket.website_endpoint}" 
 }
