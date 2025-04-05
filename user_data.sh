@@ -1,14 +1,5 @@
 #!/bin/bash
 
-# Update your Ubuntu package list.
-sudo apt-get update
-
-# Install the AWS CLI using apt-get.
-sudo apt-get install awscli
-
-# Check the AWS CLI version to confirm that it was installed correctly.
-aws --version
-
 # Configuring AWS CLI
 aws configure
           
