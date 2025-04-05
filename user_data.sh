@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Configuring AWS CLI
-aws configure
-          
 # Clone the repository url.
 git clone https://github.com/Innovate-Future-Association-Translation/translator-app.git 
 cd translator-app
