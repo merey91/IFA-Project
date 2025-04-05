@@ -3,17 +3,6 @@ provider "aws" {
   region = "ap-southeast-2" # All AWS resources created in this Terraform configuration will by default be deployed in the aus region.
 }
 
-# Configure the backend to use S3
-terraform {
-  backend "s3" {
-    bucket         = "ifa-app-bucket"     # Replace with your actual bucket name
-    key            = "jenkins-server/terraform.tfstate" # Path to the state file inside S3
-    region         = "ap-southeast-2"
-    dynamodb_table = "terraform-lock-table" # Locking mechanism
-    encrypt        = true                   # Enable state encryption
- }
-}
-
 # declares a new AWS S3 Bucket resource
 resource "aws_s3_bucket" "my_bucket" { 
   bucket = var.bucket_name 
