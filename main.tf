@@ -5,19 +5,26 @@ provider "aws" {
 
 
 # declares a new AWS S3 Bucket resource
-resource "aws_s3_bucket" "my_bucket" {
+resource "aws_s3_bucket" "s3_bucket" {
   bucket = var.bucket_name
   acl    = "public-read"
+}
 
-  website {
-    index_document = var.index_document
-    error_document = var.error_document
+resource "aws_s3_bucket_website_configuration" "s3_bucket" {
+  bucket = aws_s3_bucket.s3_bucket.id
+  
+  index_document {
+    suffix = var.index_document
+  }
+  
+  error_document {
+    key = var.error_document
   }
 }
 
 # Sets a bucket policy to explicitly allow public read access to all objects in the bucket. Necessary for hosting public static webs$
-resource "aws_s3_bucket_policy" "my_bucket_policy" {
-  bucket = aws_s3_bucket.my_bucket.id
+resource "aws_s3_bucket_policy" "s3_bucket_policy" {
+  bucket = aws_s3_bucket.s3_bucket.id
 
 policy = jsonencode({
     Version = "2012-10-17",
@@ -36,7 +43,7 @@ policy = jsonencode({
 # Configure CloudFront
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
-  domain_name = aws_s3_bucket.my_bucket.bucket_regional_domain_name
+  domain_name = aws_s3_bucket.s3_bucket.website_endpoint
   origin_id   = var.bucket_name
   }    
 
@@ -46,8 +53,8 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = var.bucket_name
-     
+    
+    target_origin_id = var.bucket_name 
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
     default_ttl            = 3600
