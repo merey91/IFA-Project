@@ -16,13 +16,17 @@ provider "aws" {
 # declares a new AWS S3 Bucket resource
 resource "aws_s3_bucket" "my_bucket" { 
   bucket = var.bucket_name 
-  acl    = "public-read" # Sets the access control list to public-read, allowing anyone to read the objects in the bucket, which is typical for static website hosting.
 
   website {
     index_document = var.index_document  # Specifies the homepage for the static website hosted in this bucket.
     error_document = var.error_document  # Specifies the error page that will be displayed when a requested file is not found.
    }
+
+  resource "aws_s3_bucket_acl" "my_bucket_acl" {
+    bucket = aws_s3_bucket.my_bucket.id
+    acl    = "public-read"
   }
+}
 
 # Sets a bucket policy to explicitly allow public read access to all objects in the bucket. Necessary for hosting public static websites.
 resource "aws_s3_bucket_policy" "my_bucket_policy" {
@@ -46,7 +50,10 @@ policy = jsonencode({
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
     domain_name = aws_s3_bucket.my_bucket.website_endpoint # Uses the S3 bucket's website endpoint as the origin for CloudFront. This integrates the S3 static website with CloudFront.
-    origin_id   = "S3-${var.bucket_name}" # A unique identifier for the origin within the CloudFront distribution.
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
   }
 
   enabled             = true # Enables the CloudFront distribution so it starts serving content.
@@ -80,7 +87,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
 resource "aws_s3_bucket_object" "website_files" {
   bucket = aws_s3_bucket.my_bucket.id  # Specifies the ID of the S3 bucket where files will be stored.
   key    = "out/"                      # The key path under which the file will be stored in the bucket.
-  source = "path_to_your_local_files/out/"  # The local path to the directory where your output files are stored that you want to upload.
-  etag   = filemd5("path_to_your_local_files/out/index.html")  # The MD5 hash of the local file to manage file integrity.
+  source = "out/"  # The local path to the directory where your output files are stored that you want to upload.
+  etag   = filemd5("/out/index.html")  # The MD5 hash of the local file to manage file integrity.
 }
 
