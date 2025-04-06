@@ -10,10 +10,9 @@ output "cloudfront_distribution_id" {
 
 output "s3_bucket_website_endpoint" {
   description = "The website endpoint URL for the S3 bucket"
-  value = aws_s3_bucket.s3_bucket.website_endpoint
+  value = aws_s3_bucket.s3_bucket.bucket_regional_domain_name
 }
 
 output "cloudfront_distribution_domain_name" {
   value = aws_cloudfront_distribution.s3_distribution.domain_name
 }
-
