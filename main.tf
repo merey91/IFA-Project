@@ -7,16 +7,20 @@ provider "aws" {
 # declares a new AWS S3 Bucket resource
 resource "aws_s3_bucket" "s3_bucket" {
   bucket = var.bucket_name
+}
+
+resource "aws_s3_bucket_acl" "s3_bucket_acl" {
+  bucket = aws_s3_bucket.s3_bucket.id
   acl    = "public-read"
 }
 
-resource "aws_s3_bucket_website_configuration" "s3_bucket" {
+resource "aws_s3_bucket_website_configuration" "website" {
   bucket = aws_s3_bucket.s3_bucket.id
-  
+
   index_document {
     suffix = var.index_document
   }
-  
+
   error_document {
     key = var.error_document
   }
@@ -39,27 +43,26 @@ policy = jsonencode({
     ]
   })
 }
-
+   
 # Configure CloudFront
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
-  domain_name = aws_s3_bucket.s3_bucket.website_endpoint
+  domain_name = aws_s3_bucket.s3_bucket.bucket_regional_domain_name
   origin_id   = var.bucket_name
-  }    
+  }
 
   enabled             = true
   default_root_object = var.index_document
-   
+       
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
     cached_methods   = ["GET", "HEAD"]
-    
-    target_origin_id = var.bucket_name 
+target_origin_id = var.bucket_name
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
-
+   
 forwarded_values {
       query_string = false
       cookies {
@@ -70,12 +73,11 @@ forwarded_values {
 
  viewer_certificate {
     cloudfront_default_certificate = true
-  } 
+  }
 
   restrictions {
     geo_restriction {
       restriction_type = "none"
     }
   }
-}   
-
+}
