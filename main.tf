@@ -22,7 +22,7 @@ resource "aws_s3_bucket_website_configuration" "s3_bucket" {
   }
 }
 
-# Sets a bucket policy to explicitly allow public read access to all objects in the bucket. Necessary for hosting public static webs$
+# Sets a bucket policy to explicitly allow public read access to all objects in the bucket. Necessary for hosting public static webs
 resource "aws_s3_bucket_policy" "s3_bucket_policy" {
   bucket = aws_s3_bucket.s3_bucket.id
 
@@ -34,7 +34,7 @@ policy = jsonencode({
         Effect = "Allow",
         Principal = "*", # Allows access to "everyone."
         Action = "s3:GetObject",
-        Resource = "${aws_s3_bucket.my_bucket.arn}/*"
+        Resource = "${aws_s3_bucket.s3_bucket.arn}/*"
       },
     ]
   })
