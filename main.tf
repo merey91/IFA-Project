@@ -17,7 +17,7 @@ provider "aws" {
 resource "aws_s3_bucket" "my_bucket" { 
   bucket = var.bucket_name 
   acl    = "public-read" # Sets the access control list to public-read, allowing anyone to read the objects in the bucket, which is typical for static website hosting.
-
+  
   user_data = file("${path.module}/user-data.sh")
 
   website {
