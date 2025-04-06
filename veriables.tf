@@ -5,10 +5,10 @@ variable "bucket_name" {
 
 variable "index_document" {
   description = "The index document of the static website."
-  default     = "index.html"  
+  default     = "index.html"
 }
 
 variable "error_document" {
   description = "The error document of the static website."
-  default     = "404.html"  
+  default     = "404.html"
 }
