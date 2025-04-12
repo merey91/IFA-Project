@@ -50,7 +50,7 @@ resource "aws_s3_bucket_public_access_block" "public_access" {
   restrict_public_buckets = false
 }
 
-# Bucket Policy for CloudFront Access (变更)
+# Bucket Policy for CloudFront Access
 resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
   bucket = aws_s3_bucket.frontend_bucket.id
 
@@ -100,13 +100,13 @@ resource "aws_s3_bucket_object" "frontend_files" {
   )
 }
 
-# Use existing Route53 Hosted Zone (修改)
+# Use existing Route53 Hosted Zone
 data "aws_route53_zone" "example_com" { # 引用现有的 Route53 托管区域
   name         = var.domain_name # 输入域名，例如 example.com
   private_zone = false           # 确保是公共托管区域
 }
 
-# Request an ACM Certificate (新增)
+# Request an ACM Certificate
 resource "aws_acm_certificate" "cert" { 
   domain_name               = var.domain_name # 主域名，例如 www.example.com
   subject_alternative_names = ["*.${var.domain_name}"] # 通配符域名，例如 *.example.com
@@ -117,7 +117,7 @@ resource "aws_acm_certificate" "cert" {
   }
 }
 
-# Validate ACM Certificate with DNS Records (新增)
+# Validate ACM Certificate with DNS Records
 resource "aws_route53_record" "cert_validation" { # 新增：为 ACM SSL证书添加 DNS 验证记录
   for_each = { for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => dvo }
 
@@ -133,7 +133,7 @@ resource "aws_acm_certificate_validation" "cert_validation_complete" { # 验证 
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
-# CloudFront Distribution (修改)
+# CloudFront Distribution
 resource "aws_cloudfront_distribution" "frontend_cdn" { # 修改：使用 ACM SSL证书配置 CloudFront 分发以支持 HTTPS 和自定义域名
   origin {
     domain_name              = aws_s3_bucket.frontend_bucket.bucket_regional_domain_name
@@ -184,12 +184,12 @@ resource "aws_cloudfront_distribution" "frontend_cdn" { # 修改：使用 ACM SS
   }
 }
 
-# CloudFront Origin Access Identity (新增)
+# CloudFront Origin Access Identity
 resource "aws_cloudfront_origin_access_identity" "oai" { # 新增：CloudFront 原点访问身份验证（OAI）
   comment = "OAI for S3 Frontend Bucket"
 }
 
-# Route53 DNS Record for Custom Domain (新增)
+# Route53 DNS Record for Custom Domain
 resource "aws_route53_record" "frontend_alias" { # 新增：为自定义域名添加 Route53 A记录指向 CloudFront 分发
   zone_id = data.aws_route53_zone.example_com.zone_id # 使用现有托管区域的 ID
   name    = "www.${var.domain_name}"
