@@ -201,10 +201,6 @@ resource "aws_route53_record" "frontend_alias" { # 新增：为自定义域名�
 }
 
 
-# Outputting Website URL (修改)
-output "website_url" {
-  value = "https://www.${var.domain_name}" # 输出自定义域名的 HTTPS URL
-}
 
 
 
