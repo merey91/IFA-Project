@@ -125,6 +125,8 @@ resource "aws_route53_record" "cert_validation" { # 新增：为 ACM SSL证书�
 resource "aws_acm_certificate_validation" "cert_validation_complete" { # 验证 ACM SSL证书是否有效
   certificate_arn         = aws_acm_certificate.cert.arn
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+
+  depends_on = [aws_route53_record.cert_validation]
 }
 
 # CloudFront Distribution
@@ -161,7 +163,7 @@ resource "aws_cloudfront_distribution" "frontend_cdn" { # 修改：使用 ACM SS
   price_class = "PriceClass_100"
 
   viewer_certificate {
-    acm_certificate_arn            = aws_acm_certificate_validation.cert_validation_complete.certificate_arn # 使用 ACM 验证完成的证书 ARN
+    acm_certificate_arn             = aws_acm_certificate_validation.cert_validation_complete.certificate_arn # 使用 ACM 验证完成的证书 ARN
     ssl_support_method              = "sni-only"
     minimum_protocol_version        = "TLSv1.2_2021"
     cloudfront_default_certificate  = false
