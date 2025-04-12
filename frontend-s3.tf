@@ -9,7 +9,7 @@ terraform {
 }
 
 provider "aws" {
-  region              = "ap-southeast-2" Defines the AWS region
+  region = "ap-southeast-2" Defines the AWS region
 }
 
 # Creates an S3 bucket for frontend.
