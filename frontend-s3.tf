@@ -100,13 +100,14 @@ resource "aws_s3_bucket_object" "frontend_files" {
   )
 }
 
-# Route53 Hosted Zone (新增)
-resource "aws_route53_zone" "ifa-hostedzone" { # 新增：托管域名的 Route53 Hosted Zone
-  name = var.domain_name # 使用变量定义域名，例如 example.com
+# Use existing Route53 Hosted Zone (修改)
+data "aws_route53_zone" "example_com" { # 引用现有的 Route53 托管区域
+  name         = var.domain_name # 输入域名，例如 example.com
+  private_zone = false           # 确保是公共托管区域
 }
 
 # Request an ACM Certificate (新增)
-resource "aws_acm_certificate" "cert" { # 新增：申请 ACM SSL证书以支持 HTTPS
+resource "aws_acm_certificate" "cert" { 
   domain_name               = var.domain_name # 主域名，例如 www.example.com
   subject_alternative_names = ["*.${var.domain_name}"] # 通配符域名，例如 *.example.com
   validation_method         = "DNS"
@@ -206,20 +207,6 @@ resource "aws_route53_record" "frontend_alias" { # 新增：为自定义域名�
 
 
 ----
-
-# S3 bucket for static content
-resource "aws_s3_bucket" "static_site" {
-  bucket = replace(var.student_subdomain, ".", "-")
-}
-
-resource "aws_s3_bucket_public_access_block" "static_site" {
-  bucket = aws_s3_bucket.static_site.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
 
 # ACM Certificate
 resource "aws_acm_certificate" "cert" {
