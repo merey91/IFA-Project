@@ -12,14 +12,9 @@ provider "aws" {
   region              = "ap-southeast-2" Defines the AWS region
 }
 
-# Generates a random 4-byte hexadecimal string to append to the bucket name, ensuring uniqueness, S3 bucket names must be globally unique
-resource "random_id" "bucket_suffix" {
-  byte_length = 4
-}
-
-# Creates an S3 bucket with a unique name for frontend.
+# Creates an S3 bucket for frontend.
 resource "aws_s3_bucket" "frontend_bucket" {
-  bucket = "frontend-site-${random_id.bucket_suffix.hex}"
+  bucket = replace(var.domain_name, ".", "-")
 
   website {
     index_document = "index.html"
