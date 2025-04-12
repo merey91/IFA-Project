@@ -121,14 +121,14 @@ resource "aws_acm_certificate" "cert" {
 resource "aws_route53_record" "cert_validation" { # 新增：为 ACM SSL证书添加 DNS 验证记录
   for_each = { for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => dvo }
 
-  zone_id = aws_route53_zone.example.zone_id
+  zone_id = aws_route53_zone.example_com.zone_id # 使用现有托管区域的 ID
   name    = each.value.resource_record_name
   type    = each.value.resource_record_type
   records = [each.value.resource_record_value]
   ttl     = 60
 }
 
-resource "aws_acm_certificate_validation" "cert_validation_complete" { # 新增：验证 ACM SSL证书是否有效
+resource "aws_acm_certificate_validation" "cert_validation_complete" { # 验证 ACM SSL证书是否有效
   certificate_arn         = aws_acm_certificate.cert.arn
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
@@ -191,7 +191,7 @@ resource "aws_cloudfront_origin_access_identity" "oai" { # 新增：CloudFront �
 
 # Route53 DNS Record for Custom Domain (新增)
 resource "aws_route53_record" "frontend_alias" { # 新增：为自定义域名添加 Route53 A记录指向 CloudFront 分发
-  zone_id = aws_route53_zone.example.zone_id
+  zone_id = data.aws_route53_zone.example_com.zone_id # 使用现有托管区域的 ID
   name    = "www.${var.domain_name}"
   type    = "A"
 
@@ -201,23 +201,3 @@ resource "aws_route53_record" "frontend_alias" { # 新增：为自定义域名�
     evaluate_target_health = false
   }
 }
-
-
-
-
-
-----
-
-# ACM Certificate
-resource "aws_acm_certificate" "cert" {
-  # Request certificate for both specific and wildcard domains
-  domain_name               = var.student_subdomain
-  subject_alternative_names = ["*.${var.student_subdomain}"]
-  validation_method         = "DNS"
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-
