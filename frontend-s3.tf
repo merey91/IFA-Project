@@ -10,7 +10,6 @@ terraform {
 
 provider "aws" {
   region              = "ap-southeast-2" Defines the AWS region
-  allowed_account_ids = [var.account_id]
 }
 
 # Generates a random 4-byte hexadecimal string to append to the bucket name, ensuring uniqueness, S3 bucket names must be globally unique
