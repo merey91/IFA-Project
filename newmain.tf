@@ -99,7 +99,7 @@ resource "aws_s3_bucket_object" "frontend_files" {
   ]
 }
 
-# Outputting Website URL
+# Outputting the S3 static website endpoint
 output "website_url" {
   value = aws_s3_bucket.frontend_bucket.website_endpoint #Outputs the S3 static website endpoint, which can be shared or used for further configurations
 }
