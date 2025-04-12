@@ -49,7 +49,7 @@ resource "aws_s3_bucket_public_access_block" "public_access" {
   restrict_public_buckets = false
 }
 
-# Bucket Policy for CloudFront Access
+# Bucket Policy for CloudFront Access (变更)
 resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
   bucket = aws_s3_bucket.frontend_bucket.id
 
@@ -63,12 +63,151 @@ resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
         },
         Action    = "s3:GetObject"
         Resource  = "${aws_s3_bucket.frontend_bucket.arn}/*"
+        Condition: {
+          StringEquals: {
+            "AWS:SourceArn": aws_cloudfront_distribution.frontend_cdn.arn
+          }
       }
-    ]
+    }]
   })
-
-  depends_on = [aws_s3_bucket_public_access_block.public_access]
 }
+
+# Uploads all files from the local out directory to the S3 bucket.
+resource "aws_s3_bucket_object" "frontend_files" {
+  for_each = fileset("out", "**")
+
+  bucket = aws_s3_bucket.frontend_bucket.id
+  key    = each.value
+  source = "out/${each.value}"
+  etag   = filemd5("out/${each.value}")
+
+  content_type = lookup(
+    {
+      html = "text/html"
+      css  = "text/css"
+      js   = "application/javascript"
+      json = "application/json"
+      png  = "image/png"
+      jpg  = "image/jpeg"
+      jpeg = "image/jpeg"
+      svg  = "image/svg+xml"
+      ico  = "image/x-icon"
+      txt  = "text/plain"
+    },
+    regex("[^.]+$", each.value),
+    "application/octet-stream"
+  )
+}
+
+# Route53 Hosted Zone (新增)
+resource "aws_route53_zone" "ifa-hostedzone" { # 新增：托管域名的 Route53 Hosted Zone
+  name = var.domain_name # 使用变量定义域名，例如 example.com
+}
+
+# Request an ACM Certificate (新增)
+resource "aws_acm_certificate" "cert" { # 新增：申请 ACM SSL证书以支持 HTTPS
+  domain_name               = var.domain_name # 主域名，例如 www.example.com
+  subject_alternative_names = ["*.${var.domain_name}"] # 通配符域名，例如 *.example.com
+  validation_method         = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Validate ACM Certificate with DNS Records (新增)
+resource "aws_route53_record" "cert_validation" { # 新增：为 ACM SSL证书添加 DNS 验证记录
+  for_each = { for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => dvo }
+
+  zone_id = aws_route53_zone.example.zone_id
+  name    = each.value.resource_record_name
+  type    = each.value.resource_record_type
+  records = [each.value.resource_record_value]
+  ttl     = 60
+}
+
+resource "aws_acm_certificate_validation" "cert_validation_complete" { # 新增：验证 ACM SSL证书是否有效
+  certificate_arn         = aws_acm_certificate.cert.arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+}
+
+
+
+# CloudFront Distribution (新增)
+resource "aws_cloudfront_distribution" "frontend_cdn" { # 新增：创建 CloudFront 分发以支持 HTTPS 和自定义域名
+  origin {
+    domain_name              = aws_s3_bucket.frontend_bucket.bucket_regional_domain_name
+    origin_id                = "S3-FrontendBucket"
+
+    s3_origin_config {
+      origin_access_identity = aws_cloudfront_origin_access_identity.oai.cloudfront_access_identity_path
+    }
+  }
+
+  enabled             = true
+  is_ipv6_enabled     = true
+  default_root_object = "index.html"
+
+  aliases             = ["www.example.com"] # 修改：绑定自定义域名
+
+  default_cache_behavior {
+    allowed_methods        = ["GET", "HEAD"]
+    cached_methods         = ["GET", "HEAD"]
+    target_origin_id       = "S3-FrontendBucket"
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string          = false
+      cookies {
+        forward             = "none"
+      }
+    }
+  }
+
+  price_class     = "PriceClass_100"
+
+  viewer_certificate {
+    acm_certificate_arn            = aws_acm_certificate_validation.frontend_cert_validation.certificate_arn # 使用 ACM SSL证书以支持 HTTPS
+    ssl_support_method              = "sni-only"
+    minimum_protocol_version        = "TLSv1.2_2021"
+    cloudfront_default_certificate  = false
+  }
+
+restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  tags = {
+    Name = "FrontendDistribution"
+  }
+}
+
+# CloudFront Origin Access Identity (新增)
+resource "aws_cloudfront_origin_access_identity" "oai" { # 新增：CloudFront 原点访问身份验证（OAI）
+  comment = "OAI for S3 Frontend Bucket"
+}
+
+# Route53 DNS Record for Custom Domain (新增)
+resource "aws_route53_record" "frontend_alias" { # 新增：为自定义域名添加 Route53 A记录指向 CloudFront 分发
+  zone_id = aws_route53_zone.example.zone_id
+  name    = "miro.aws.jrworkshop.au"
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.frontend_cdn.domain_name
+    zone_id                = aws_cloudfront_distribution.frontend_cdn.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# Outputting Website URL (修改)
+output "website_url" {
+  value = "https://miro.aws.jrworkshop.au" # 修改：输出自定义域名的 URL，而不是 S3 的静态网站端点
+}
+
+
 
 ----
 provider "aws" {
