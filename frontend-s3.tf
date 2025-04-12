@@ -9,6 +9,11 @@ terraform {
 }
 
 provider "aws" {
+  region              = var.region
+  allowed_account_ids = [var.account_id]
+}
+
+provider "aws" {
   region = "ap-southeast-2" # Defines the AWS region
 }
 
@@ -205,10 +210,6 @@ resource "aws_route53_record" "frontend_alias" { # 新增：为自定义域名�
 
 
 ----
-provider "aws" {
-  region              = var.region
-  allowed_account_ids = [var.account_id]
-}
 
 # S3 bucket for static content
 resource "aws_s3_bucket" "static_site" {
