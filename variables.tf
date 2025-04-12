@@ -1,5 +1,5 @@
 variable "domain_name" {
-  description = "The root domain name to use for the website (e.g., example.com)"
+  description = "The root domain name to use for the website"
   type        = string
 }
 
