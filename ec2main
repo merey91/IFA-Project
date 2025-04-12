@@ -60,7 +60,7 @@ resource "aws_instance" "app_instance" {
               sudo yum install -y nodejs
               
               # 克隆代码仓库（替换为你的实际仓库地址）
-              git clone -b devops-ben https://github.com/Innovate-Future-Association-Translation/translator-app.git /home/ec2-user/app
+              git clone -b devops-miro https://github.com/Innovate-Future-Association-Translation/translator-app.git /home/ec2-user/app
               cd /home/ec2-user/app
               
               # 安装依赖并构建
