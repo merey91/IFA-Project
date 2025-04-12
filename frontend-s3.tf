@@ -131,10 +131,8 @@ resource "aws_acm_certificate_validation" "cert_validation_complete" { # 新增�
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
-
-
-# CloudFront Distribution (新增)
-resource "aws_cloudfront_distribution" "frontend_cdn" { # 新增：创建 CloudFront 分发以支持 HTTPS 和自定义域名
+# CloudFront Distribution (修改)
+resource "aws_cloudfront_distribution" "frontend_cdn" { # 修改：使用 ACM SSL证书配置 CloudFront 分发以支持 HTTPS 和自定义域名
   origin {
     domain_name              = aws_s3_bucket.frontend_bucket.bucket_regional_domain_name
     origin_id                = "S3-FrontendBucket"
@@ -148,7 +146,7 @@ resource "aws_cloudfront_distribution" "frontend_cdn" { # 新增：创建 CloudF
   is_ipv6_enabled     = true
   default_root_object = "index.html"
 
-  aliases             = ["www.example.com"] # 修改：绑定自定义域名
+  aliases = ["www.${var.domain_name}"] # 使用自定义域名作为别名
 
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD"]
@@ -157,23 +155,23 @@ resource "aws_cloudfront_distribution" "frontend_cdn" { # 新增：创建 CloudF
     viewer_protocol_policy = "redirect-to-https"
 
     forwarded_values {
-      query_string          = false
+      query_string = false
       cookies {
-        forward             = "none"
+        forward = "none"
       }
     }
   }
 
-  price_class     = "PriceClass_100"
+  price_class = "PriceClass_100"
 
   viewer_certificate {
-    acm_certificate_arn            = aws_acm_certificate_validation.frontend_cert_validation.certificate_arn # 使用 ACM SSL证书以支持 HTTPS
+    acm_certificate_arn            = aws_acm_certificate_validation.cert_validation_complete.certificate_arn # 使用 ACM 验证完成的证书 ARN
     ssl_support_method              = "sni-only"
     minimum_protocol_version        = "TLSv1.2_2021"
     cloudfront_default_certificate  = false
   }
 
-restrictions {
+  restrictions {
     geo_restriction {
       restriction_type = "none"
     }
@@ -192,7 +190,7 @@ resource "aws_cloudfront_origin_access_identity" "oai" { # 新增：CloudFront �
 # Route53 DNS Record for Custom Domain (新增)
 resource "aws_route53_record" "frontend_alias" { # 新增：为自定义域名添加 Route53 A记录指向 CloudFront 分发
   zone_id = aws_route53_zone.example.zone_id
-  name    = "miro.aws.jrworkshop.au"
+  name    = "www.${var.domain_name}"
   type    = "A"
 
   alias {
@@ -202,9 +200,10 @@ resource "aws_route53_record" "frontend_alias" { # 新增：为自定义域名�
   }
 }
 
+
 # Outputting Website URL (修改)
 output "website_url" {
-  value = "https://miro.aws.jrworkshop.au" # 修改：输出自定义域名的 URL，而不是 S3 的静态网站端点
+  value = "https://www.${var.domain_name}" # 输出自定义域名的 HTTPS URL
 }
 
 
