@@ -47,15 +47,6 @@ resource "aws_s3_bucket_public_access_block" "public_access" {
   restrict_public_buckets = false
 }
 
-resource "aws_s3_bucket_acl" "example" {
-  depends_on = [
-    aws_s3_bucket_ownership_controls.ownership,
-    aws_s3_bucket_public_access_block.public_access,
-  ]
-
-  bucket = aws_s3_bucket.example.id
-  acl    = "public-read"
-}
 
 # Bucket Policy for CloudFront Access
 resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
@@ -81,7 +72,7 @@ resource "aws_s3_bucket_policy" "frontend_bucket_policy" {
 }
 
 # Uploads all files from the local out directory to the S3 bucket.
-resource "aws_s3_bucket_object" "frontend_files" {
+resource "aws_s3_object" "frontend_files" {
   for_each = fileset("out", "**")
 
   bucket = aws_s3_bucket.frontend_bucket.id
