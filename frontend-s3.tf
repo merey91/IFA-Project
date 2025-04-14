@@ -201,3 +201,115 @@ resource "aws_route53_record" "frontend_alias" { # 新增：为自定义域名�
     evaluate_target_health = false
   }
 }
+
+# 配置 AWS 提供商
+provider "aws" {
+  region = "ap-southeast-2" # 替换为你的目标区域
+}
+
+# 自定义 S3 存储桶名称
+variable "bucket_name" {
+  description = "The unique name of the S3 bucket"
+  type        = string
+}
+
+# 创建 S3 存储桶
+resource "aws_s3_bucket" "frontend_bucket" {
+  bucket = var.bucket_name
+
+  website {
+    index_document = "index.html"
+    error_document = "404.html"
+  }
+
+  tags = {
+    Name = "FrontendHosting"
+  }
+}
+
+# 设置对象所有权控制
+resource "aws_s3_bucket_ownership_controls" "ownership" {
+  bucket = aws_s3_bucket.frontend_bucket.id
+
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+# 配置公共访问设置
+resource "aws_s3_bucket_public_access_block" "public_access" {
+  bucket                  = aws_s3_bucket.frontend_bucket.id
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+# 设置存储桶策略
+resource "aws_s3_bucket_policy" "public_read" {
+  bucket = aws_s3_bucket.frontend_bucket.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.frontend_bucket.arn}/*"
+      }
+    ]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.public_access]
+}
+
+# 上传静态网站文件
+resource "aws_s3_bucket_object" "frontend_files" {
+  for_each = fileset("out", "**")
+
+  bucket = aws_s3_bucket.frontend_bucket.id
+  key    = each.value
+  source = "out/${each.value}"
+  etag   = filemd5("out/${each.value}")
+
+  content_type = lookup(
+    {
+      html = "text/html"
+      css  = "text/css"
+      js   = "application/javascript"
+      json = "application/json"
+      png  = "image/png"
+      jpg  = "image/jpeg"
+      jpeg = "image/jpeg"
+      svg  = "image/svg+xml"
+      ico  = "image/x-icon"
+      txt  = "text/plain"
+    },
+    regex("[^.]+$", each.value),
+    "application/octet-stream"
+  )
+
+  depends_on = [
+    aws_s3_bucket_policy.public_read
+  ]
+}
+
+# 配置 Route 53 DNS 记录
+resource "aws_route53_zone" "example_zone" {
+  name = "example.com" # 替换为你的域名
+}
+
+resource "aws_route53_record" "www" {
+  zone_id = aws_route53_zone.example_zone.zone_id
+  name    = "www.example.com" # 替换为你的子域名
+  type    = "A"
+
+  alias {
+    name                   = aws_s3_bucket.frontend_bucket.website_domain
+    zone_id                = aws_s3_bucket.frontend_bucket.hosted_zone_id
+    evaluate_target_health = true
+  }
+}
+
+
