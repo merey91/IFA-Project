@@ -94,24 +94,100 @@ resource "aws_s3_bucket_object" "frontend_files" {
   ]
 }
 
+# 请求 ACM 证书
+resource "aws_acm_certificate" "certificate" {
+  domain_name       = "${var.subdomain}.${var.domain_name}" # 例如 www.example.com
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 # Use an existing Route 53 hosted zone
 data "aws_route53_zone" "existing_zone" {
   name = var.domain_name
 }
 
-# Route53 DNS Record for Custom Domain
-resource "aws_route53_record" "alias_record" {
+# 验证 ACM 证书
+resource "aws_route53_record" "certificate_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.certificate.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  zone_id = data.aws_route53_zone.existing_zone.zone_id
+  name    = each.value.name
+  type    = each.value.type
+  records = [each.value.record]
+  ttl     = 60
+}
+
+# 等待 ACM 证书验证完成
+resource "aws_acm_certificate_validation" "validation" {
+  certificate_arn         = aws_acm_certificate.certificate.arn
+  validation_record_fqdns = [for record in aws_route53_record.certificate_validation : record.fqdn]
+}
+
+# 创建 CloudFront 分发
+resource "aws_cloudfront_distribution" "frontend_distribution" {
+  origin {
+    domain_name = aws_s3_bucket.frontend_bucket.website_endpoint
+    origin_id   = "S3-${aws_s3_bucket.frontend_bucket.bucket}"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  enabled             = true
+  default_root_object = "index.html"
+
+  aliases = ["${var.subdomain}.${var.domain_name}"] # 例如 www.example.com
+
+  default_cache_behavior {
+    allowed_methods  = ["GET", "HEAD"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "S3-${aws_s3_bucket.frontend_bucket.bucket}"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn = aws_acm_certificate.certificate.arn
+    ssl_support_method  = "sni-only"
+  }
+}
+
+# Configure Route 53 DNS records to point to CloudFront.
+resource "aws_route53_record" "alias_to_cloudfront" {
   zone_id = data.aws_route53_zone.existing_zone.zone_id
   name    = "${var.subdomain}.${var.domain_name}" # 例如 www.example.com
   type    = "A"
 
   alias {
-    name                   = aws_s3_bucket.frontend_bucket.website_domain
-    zone_id                = aws_s3_bucket.frontend_bucket.hosted_zone_id
-    evaluate_target_health = true
+    name                   = aws_cloudfront_distribution.frontend_distribution.domain_name
+    zone_id                = aws_cloudfront_distribution.frontend_distribution.hosted_zone_id
+    evaluate_target_health = false
   }
 }
-
-
-
-
