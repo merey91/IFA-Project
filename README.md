@@ -7,6 +7,7 @@ variables：定义用户输入的变量
 创建一个 A 记录，将子域名（如 www.example.com）指向 S3 静态网站的终端节点。
 
 运行 Terraform 命令 :
+
 初始化 Terraform：
 terraform init
 
