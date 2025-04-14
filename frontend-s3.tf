@@ -202,18 +202,13 @@ resource "aws_route53_record" "frontend_alias" { # 新增：为自定义域名�
   }
 }
 
+----
 # 配置 AWS 提供商
 provider "aws" {
   region = "ap-southeast-2" # 替换为你的目标区域
 }
 
-# 自定义 S3 存储桶名称
-variable "bucket_name" {
-  description = "The unique name of the S3 bucket"
-  type        = string
-}
-
-# 创建 S3 存储桶
+# Create a new S3 bucket
 resource "aws_s3_bucket" "frontend_bucket" {
   bucket = var.bucket_name
 
@@ -227,7 +222,7 @@ resource "aws_s3_bucket" "frontend_bucket" {
   }
 }
 
-# 设置对象所有权控制
+# Set Object Ownership Control
 resource "aws_s3_bucket_ownership_controls" "ownership" {
   bucket = aws_s3_bucket.frontend_bucket.id
 
@@ -236,7 +231,7 @@ resource "aws_s3_bucket_ownership_controls" "ownership" {
   }
 }
 
-# 配置公共访问设置
+# Set up public access settings
 resource "aws_s3_bucket_public_access_block" "public_access" {
   bucket                  = aws_s3_bucket.frontend_bucket.id
   block_public_acls       = false
@@ -245,7 +240,7 @@ resource "aws_s3_bucket_public_access_block" "public_access" {
   restrict_public_buckets = false
 }
 
-# 设置存储桶策略
+# Set the S3 bucket policy
 resource "aws_s3_bucket_policy" "public_read" {
   bucket = aws_s3_bucket.frontend_bucket.id
 
@@ -264,7 +259,7 @@ resource "aws_s3_bucket_policy" "public_read" {
   depends_on = [aws_s3_bucket_public_access_block.public_access]
 }
 
-# 上传静态网站文件
+# Upload static website files
 resource "aws_s3_bucket_object" "frontend_files" {
   for_each = fileset("out", "**")
 
@@ -295,14 +290,15 @@ resource "aws_s3_bucket_object" "frontend_files" {
   ]
 }
 
-# 配置 Route 53 DNS 记录
-resource "aws_route53_zone" "example_zone" {
-  name = "example.com" # 替换为你的域名
+# Use an existing Route 53 hosted zone
+data "aws_route53_zone" "existing_zone" {
+  name = var.domain_name
 }
 
-resource "aws_route53_record" "www" {
-  zone_id = aws_route53_zone.example_zone.zone_id
-  name    = "www.example.com" # 替换为你的子域名
+# Route53 DNS Record for Custom Domain
+resource "aws_route53_record" "alias_record" {
+  zone_id = data.aws_route53_zone.existing_zone.zone_id
+  name    = "${var.subdomain}.${var.domain_name}" # 例如 www.example.com
   type    = "A"
 
   alias {
@@ -311,5 +307,6 @@ resource "aws_route53_record" "www" {
     evaluate_target_health = true
   }
 }
+
 
 
