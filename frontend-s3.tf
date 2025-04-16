@@ -94,9 +94,9 @@ resource "aws_s3_bucket_object" "frontend_files" {
   ]
 }
 
-# 请求 ACM 证书
+# Request ACM certificate
 resource "aws_acm_certificate" "certificate" {
-  domain_name       = "${var.subdomain}.${var.domain_name}" # 例如 www.example.com
+  domain_name       = "${var.subdomain}.${var.domain_name}" 
   validation_method = "DNS"
 
   lifecycle {
@@ -109,7 +109,7 @@ data "aws_route53_zone" "existing_zone" {
   name = var.domain_name
 }
 
-# 验证 ACM 证书
+# validate ACM certificate
 resource "aws_route53_record" "certificate_validation" {
   for_each = {
     for dvo in aws_acm_certificate.certificate.domain_validation_options : dvo.domain_name => {
@@ -126,13 +126,13 @@ resource "aws_route53_record" "certificate_validation" {
   ttl     = 60
 }
 
-# 等待 ACM 证书验证完成
+# Waiting for the ACM certificate to be validated
 resource "aws_acm_certificate_validation" "validation" {
   certificate_arn         = aws_acm_certificate.certificate.arn
   validation_record_fqdns = [for record in aws_route53_record.certificate_validation : record.fqdn]
 }
 
-# 创建 CloudFront 分发
+# Create a CloudFront distribution
 resource "aws_cloudfront_distribution" "frontend_distribution" {
   origin {
     domain_name = aws_s3_bucket.frontend_bucket.website_endpoint
@@ -149,7 +149,7 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
   enabled             = true
   default_root_object = "index.html"
 
-  aliases = ["${var.subdomain}.${var.domain_name}"] # 例如 www.example.com
+  aliases = ["${var.subdomain}.${var.domain_name}"] 
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
@@ -182,7 +182,7 @@ resource "aws_cloudfront_distribution" "frontend_distribution" {
 # Configure Route 53 DNS records to point to CloudFront.
 resource "aws_route53_record" "alias_to_cloudfront" {
   zone_id = data.aws_route53_zone.existing_zone.zone_id
-  name    = "${var.subdomain}.${var.domain_name}" # 例如 www.example.com
+  name    = "${var.subdomain}.${var.domain_name}"
   type    = "A"
 
   alias {
