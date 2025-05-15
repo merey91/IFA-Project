@@ -1,3 +1,17 @@
+# Specifies the AWS provider for Terraform
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-southeast-2" Defines the AWS region
+}
+
 # Create the main S3 bucket (for hosting the static website)
 resource "aws_s3_bucket" "bucket" {
   bucket = var.bucket_name  # Bucket name passed in via variable
