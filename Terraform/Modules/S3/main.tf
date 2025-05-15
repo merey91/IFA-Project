@@ -18,13 +18,13 @@ resource "aws_s3_bucket" "bucket" {
   force_destroy = true      # Force deletion even if the bucket is not empty
 
   tags = {
-    "Project"   = "lindalu.click"
+    "Project"   = "miro.click"
     "ManagedBy" = "Terraform"
   }
 
   logging {
     target_bucket = aws_s3_bucket.logging_bucket.id  # Target bucket for access logs
-    target_prefix = "techscrum-s3-log/"              # Prefix for stored log files
+    target_prefix = "ifa-s3-log/"              # Prefix for stored log files
   }
 }
 
